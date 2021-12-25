@@ -1,2 +1,6 @@
-# parallel-programming
-Various parallel program implementations.
+# Parallel Programming
+
+Various parallel programming implementations.
+
+- Cardiac Simulation
+- Sparse Matrix-Vector Multiplication
