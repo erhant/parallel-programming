@@ -139,14 +139,14 @@ int main(int argc, char **argv) {
     for (i = 1; i <= n; i++) R[j][i] = 1.0;
 
   // Copy stuff to device
-  const size_t memcpy_size = sizeof(double) * (n + 2) * (m + 2);
+  const int memcpy_size = sizeof(double) * (n + 2) * (m + 2);
   double *d_E, *d_R, *d_E_prev;
   CUDA_CHECK_CALL(cudaMalloc(&d_E, memcpy_size));
   CUDA_CHECK_CALL(cudaMalloc(&d_E_prev, memcpy_size));
   CUDA_CHECK_CALL(cudaMalloc(&d_R, memcpy_size));
-  CUDA_CHECK_CALL(cudaMemcpy(d_E, E, memcpy_size, cudaMemcpyHostToDevice));
-  CUDA_CHECK_CALL(cudaMemcpy(d_E_prev, E_prev, memcpy_size, cudaMemcpyHostToDevice));
-  CUDA_CHECK_CALL(cudaMemcpy(d_R, R, memcpy_size, cudaMemcpyHostToDevice));
+  CUDA_CHECK_CALL(cudaMemcpy(d_E, &E[m + 2], memcpy_size, cudaMemcpyHostToDevice));
+  CUDA_CHECK_CALL(cudaMemcpy(d_E_prev, &E_prev[m + 2], memcpy_size, cudaMemcpyHostToDevice));
+  CUDA_CHECK_CALL(cudaMemcpy(d_R, &R[m + 2], memcpy_size, cudaMemcpyHostToDevice));
 
   // For time integration, these values shouldn't change
   double dx = 1.0 / n;
@@ -174,34 +174,35 @@ int main(int argc, char **argv) {
   const double t0 = getTime();
   double t = 0.0;
   int niter = 0;
+  bool isEven = true;  // we start with 0th step, which is even
   while (t < T) {
     t += dt;
     niter++;
 
     // run kernel
     kernel_v3<<<bpg, tpb>>>(d_E, d_E_prev, d_R, alpha, epsilon, dt, kk, a, b, M1, M2, m, n);
-    CUDA_CHECK_CALL(cudaDeviceSynchronize());
+    isEven = !isEven;
 
-    // swap
-    double *tmp;
-    tmp = d_E;
-    d_E = d_E_prev;
-    d_E_prev = tmp;
-    // // instead of synchronizing, give swapped params
-    // if (t < T) {
-    //   // this if check is negligible due to the overlap of the kernel computation
-    //   kernel_v3<<<bpg, tpb>>>(d_E_prev, d_E, d_R, alpha, epsilon, dt, kk, a, b, M1, M2, m, n);
-    //   t += dt;
-    //   niter++;
-    // }
+    // instead of synchronizing and swapping, give swapped params to the kernel
+    if (t < T) {
+      t += dt;
+      niter++;
+
+      // this if check is negligible due to the overlap of the kernel computation
+      kernel_v3<<<bpg, tpb>>>(d_E_prev, d_E, d_R, alpha, epsilon, dt, kk, a, b, M1, M2, m, n);
+      // CUDA_CHECK_LAST("KERNEL 3");
+      // CUDA_CHECK_CALL(cudaDeviceSynchronize());
+      isEven = !isEven;
+    }
   }
 
+  CUDA_CHECK_CALL(cudaDeviceSynchronize());
   double time_elapsed = getTime() - t0;
 
-  // Copy stuff back
-  CUDA_CHECK_CALL(cudaMemcpy(E, d_E, memcpy_size, cudaMemcpyDeviceToHost));
-  CUDA_CHECK_CALL(cudaMemcpy(E_prev, d_E_prev, memcpy_size, cudaMemcpyDeviceToHost));
-  CUDA_CHECK_CALL(cudaMemcpy(R, d_R, memcpy_size, cudaMemcpyDeviceToHost));
+  // Copy stuff back (with respect to isEven)
+  CUDA_CHECK_CALL(cudaMemcpy(&E[m + 2], isEven ? d_E : d_E_prev, memcpy_size, cudaMemcpyDeviceToHost));
+  CUDA_CHECK_CALL(cudaMemcpy(&E_prev[m + 2], isEven ? d_E_prev : d_E, memcpy_size, cudaMemcpyDeviceToHost));
+  CUDA_CHECK_CALL(cudaMemcpy(&R[m + 2], d_R, memcpy_size, cudaMemcpyDeviceToHost));
 
   double Gflops = (double)(niter * (1E-9 * n * n) * 28.0) / time_elapsed;
   double BW = (double)(niter * 1E-9 * (n * n * sizeof(double) * 4.0)) / time_elapsed;

@@ -10,8 +10,16 @@
               __FILE__, cudaGetErrorString(cudaStatus), cudaStatus);                                              \
   }
 
+#define CUDA_CHECK_LAST(label)                                            \
+  {                                                                       \
+    cudaError_t err = cudaGetLastError();                                 \
+    if (cudaSuccess != err) {                                             \
+      fprintf(stderr, "%s failed: %s\n", label, cudaGetErrorString(err)); \
+    }                                                                     \
+  }
+
 __global__ void kernel_v3(double *E, double *E_prev, double *R, const double alpha, const double epsilon,
                           const double dt, const double kk, const double a, const double b, const double M1,
-                          const double M2, int m, int n);
+                          const double M2, const int m, const int n);
 
 #endif  // __CARDIACSIM_KERNELS_H_
