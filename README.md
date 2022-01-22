@@ -5,6 +5,9 @@ Various parallel programming implementations.
 - Cardiac Simulation
 - Sparse Matrix-Vector Multiplication
 - Jacobi Solver on GPU
+- Game of Life
+- Noise Remover
+- N-Queens Problem
 
 Also includes header files for:
 
