@@ -16,3 +16,5 @@ Also includes header files for:
 - Read MatrixMarket matrices in COO format
 - COO to/from CSR
 - COO to/from CSC
+
+Use Rust, C and CUDA!
