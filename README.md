@@ -9,6 +9,7 @@ Various parallel programming implementations.
 - Noise Remover
 - N-Queens Problem
 - Marching Squares
+- A parallel sieve of eratosthenes
 
 Also includes header files for:
 
