@@ -1,0 +1,11 @@
+{
+  "explorer.sortOrder": "type",
+  "editor.formatOnSave": true, 
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "files.associations": {
+    "assert.h": "c",
+    "gnu_plot.h": "c"
+  },
+  
+}

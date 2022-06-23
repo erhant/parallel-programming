@@ -9,15 +9,15 @@
  * Requirements: Be sure and load with -lm
  */
 
-/* 
+/*
  * This scheme uses gettmeofday() to seed the random number generator,
  * and has obvious flaws.
  *
  */
- 
+
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <sys/time.h>
 #if 0
 extern "C" {
@@ -27,25 +27,18 @@ extern "C" {
 
 #endif
 
-
-int seed_rand(long sd)
-{
-static int seed_me = 0;  /* "...Seymour, seed me all night long..." */
-   if (sd){
-      seed_me = sd;
-      }
-   else{
-      struct timeval tp;
-      gettimeofday(&tp,NULL);
-      long hashed = ((tp.tv_sec & ~tp.tv_usec) | (~tp.tv_sec & tp.tv_usec));
-      seed_me = hashed;
-   }
-   srand48( seed_me );
-   return(seed_me);
+int seed_rand(long sd) {
+  static int seed_me = 0; /* "...Seymour, seed me all night long..." */
+  if (sd) {
+    seed_me = sd;
+  } else {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    long hashed = ((tp.tv_sec & ~tp.tv_usec) | (~tp.tv_sec & tp.tv_usec));
+    seed_me = hashed;
+  }
+  srand48(seed_me);
+  return (seed_me);
 }
 
-double real_rand()
-{
-
-   return drand48();
-}
+double real_rand() { return drand48(); }
