@@ -5,7 +5,8 @@
   "editor.guides.bracketPairs": "active",
   "files.associations": {
     "assert.h": "c",
-    "gnu_plot.h": "c"
+    "gnu_plot.h": "c",
+    "*.tpp": "cpp"
   },
   
 }

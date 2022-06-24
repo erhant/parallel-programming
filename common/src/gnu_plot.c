@@ -2,7 +2,7 @@
 
 FILE *gnu = NULL;
 
-int MeshPlot(int t, int m, int n, char **mesh) {
+int plot_mesh(int t, int m, int n, char **mesh) {
   int i, j;
   char iter[60];
   sprintf(iter, "\"Iter = %d\"", t);

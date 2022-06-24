@@ -11,4 +11,4 @@
  * @param n
  * @param mesh
  * */
-int MeshPlot(int t, int m, int n, char **mesh);
+int plot_mesh(int t, int m, int n, char **mesh);
