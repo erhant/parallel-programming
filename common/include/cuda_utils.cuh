@@ -1,3 +1,5 @@
+#pragma once
+
 #include <assert.h>
 #ifdef __NVCC__
 #include <cuda.h>
@@ -28,20 +30,16 @@
   }
 
 // Start CUDA events for the stopwatch
-// double start = omp_get_wtime(), stop;
-#define START_TIMERS()                        \
-  cudaEvent_t start, stop;                    \
-  CUDA_CHECK_CALL(cudaEventCreate(&(start))); \
-  CUDA_CHECK_CALL(cudaEventCreate(&(stop)));  \
-  CUDA_CHECK_CALL(cudaEventRecord(start, 0));
+#define START_GPU_TIMERS()                              \
+  cudaEvent_t start_cudaEvent, stop_cudaEvent;          \
+  CUDA_CHECK_CALL(cudaEventCreate(&(start_cudaEvent))); \
+  CUDA_CHECK_CALL(cudaEventCreate(&(stop_cudaEvent)));  \
+  CUDA_CHECK_CALL(cudaEventRecord(start_cudaEvent, 0));
 
-// Stop CUDA events for the stopwatch, and record the milliseconds passed.
-// CUDA_CHECK_CALL(cudaDeviceSynchronize());
-// stop = omp_get_wtime();
-// ms = (stop - start) / 1000.0;
-#define STOP_TIMERS(ms)                                          \
-  CUDA_CHECK_CALL(cudaEventRecord(stop, 0));                     \
-  CUDA_CHECK_CALL(cudaEventSynchronize(stop));                   \
-  CUDA_CHECK_CALL(cudaEventElapsedTime(&(ms), (start), (stop))); \
-  CUDA_CHECK_CALL(cudaEventDestroy(start));                      \
-  CUDA_CHECK_CALL(cudaEventDestroy(stop));
+// Stop CUDA events for the stopwatch, and record the milliseconds passed
+#define STOP_GPU_TIMERS(ms)                                                      \
+  CUDA_CHECK_CALL(cudaEventRecord(stop_cudaEvent, 0));                           \
+  CUDA_CHECK_CALL(cudaEventSynchronize(stop_cudaEvent));                         \
+  CUDA_CHECK_CALL(cudaEventElapsedTime(&(ms), start_cudaEvent, stop_cudaEvent)); \
+  CUDA_CHECK_CALL(cudaEventDestroy(start_cudaEvent));                            \
+  CUDA_CHECK_CALL(cudaEventDestroy(stop_cudaEvent));

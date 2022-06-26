@@ -3,7 +3,9 @@
     {
       "name": "Mac",
       "includePath": [
-        "${workspaceFolder}/**"
+        "${workspaceFolder}/common/include",
+        "${workspaceFolder}/projects/**",
+        "/usr/local/include/"
       ],
       "defines": [],
       "macFrameworkPath": [

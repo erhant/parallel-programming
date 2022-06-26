@@ -2,17 +2,20 @@
 
 Various parallel programming implementations.
 
-- [Sparse Matrix-Vector Multiplication](./spmv/)
-- [Jacobi Stencil](./jacobi-1d-stencil/)
-- [Jacobi Method](./jacobi-method/)
-- [Game of Life](./game-of-life/)
-- [Noise Remover](./noise-remover/)
-- [$N$-Queens Problem](./nqueens-problem/)
-- [Primes](./primes)
+- [Sparse Matrix-Vector Multiplication](./projects/spmv/)
+- [Cardiac Simulation](./projects/cardiac-simulation)
+- [Jacobi Stencil](./projects/jacobi-1d-stencil/)
+- [Jacobi Method](./projects/jacobi-method/)
+- [Game of Life](./projects/game-of-life/)
+- [Noise Remover](./projects/noise-remover/)
+- [$N$-Queens Problem](./projects/nqueens-problem/)
+- [Primes](./projects/primes)
 
 Also includes [header files](./common/) for:
 
-- Safe CUDA calls
-- Read MatrixMarket matrices in COO format
-- COO $\to$ CSR
-- COO $\to$ CSC
+- Safe CUDA function and kernel calls, timer macros.
+- MatrixMarket reader for COO format with COO $\to$ CSR & CSR conversion
+- GNU Plotting
+- Random Numbers
+
+Most of the files have the following sturcture: a `main` file that parses command line arguments and calls the actual application. The application is called via a driver function that handles all the plotting and reporting if necessary. Parameters are usually held in a params object.

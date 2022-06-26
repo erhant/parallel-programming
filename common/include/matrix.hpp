@@ -86,4 +86,5 @@ CSR_Matrix<T> *create_CSR(int rows, int cols, int nonzeros);
 template <typename TSRC, typename TDEST>
 CSR_Matrix<TDEST> *duplicate_CSR(CSR_Matrix<TSRC> *mat);
 
+// import template function definitions
 #include "matrix.tpp"
