@@ -1,6 +1,5 @@
 #include "game-of-life.hpp"
 
-// auxillary function for world population
 int GameOfLife::populateCurrentWorld() {
   population = 0;
   if (game == DEFAULT) {
@@ -111,8 +110,7 @@ void GameOfLife::parallel() {
   if (plotter) plotter->plot(iter, population, currWorld);
 }
 
-GameOfLife::GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, bool isPlotEnabled, game_e game,
-                       runtype_e runType) {
+GameOfLife::GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, bool isPlotEnabled, game_e game) {
   // add ghost regions
   nx += 2;
   ny += 2;
@@ -125,7 +123,6 @@ GameOfLife::GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, 
   this->prob = prob;
   this->isPlotEnabled = isPlotEnabled;
   this->game = game;
-  this->runType = runType;
 
   // allocate current world (which you read from)
   int i;
@@ -149,29 +146,10 @@ GameOfLife::GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, 
     nextWorld[0][i] = 0;
     nextWorld[nx - 1][i] = 0;
   }
-
-  // plot the starting world
   this->populateCurrentWorld();
+
+  // prepare plotter
   if (isPlotEnabled) plotter = new GameOfLifePlotter(nx, ny);
-
-  // run
-  if (numthreads == 1) {
-    printf("Serial\n\tProbability: %f\n\tThreads: %d\n\tIterations: %d\n\tProblem Size: %d x %d\n", prob, numthreads,
-           maxiter, nx, ny);
-
-    // START_HOST_TIMERS();
-    this->serial();
-    // STOP_HOST_TIMERS(runtimeMS);
-  } else {
-    printf("Parallel\n\tProbability: %f\n\tThreads: %d\n\tIterations: %d\n\tProblem Size: %d x %d\n", prob, numthreads,
-           maxiter, nx, ny);
-
-    // START_HOST_TIMERS();
-    this->parallel();
-    // STOP_HOST_TIMERS(runtimeMS);
-  }
-
-  printf("Running time for the iterations: %f sec.\n", runtimeMS);
 }
 
 GameOfLife::~GameOfLife() {
@@ -179,4 +157,14 @@ GameOfLife::~GameOfLife() {
   if (isPlotEnabled) delete plotter;
   free(nextWorld);
   free(currWorld);
+}
+
+void GameOfLife::printParameters(runtype_e runType) {
+  printf(
+      "%s\n\t"
+      "Probability: %f\n\t"
+      "Threads: %d\n\t"
+      "Iterations: %d\n\t"
+      "Problem Size: %d x %d\n",
+      runType == SERIAL ? "Serial" : "Parallel", prob, numthreads, maxiter, nx, ny);
 }

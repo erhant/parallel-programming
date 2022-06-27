@@ -1,14 +1,5 @@
 #pragma once
 
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 #include "general_utils.hpp"
 #include "plotter.hpp"
 
@@ -18,6 +9,11 @@ extern "C" {
 
 typedef enum GameType { DEFAULT, BLOCK } game_e;
 
+/**
+ * Game of Life.
+ *
+ * The constructor sets up the game parameters, and runs the program.
+ */
 class GameOfLife : public Project {
  private:
   // parameters
@@ -28,7 +24,6 @@ class GameOfLife : public Project {
   float prob;          // probability of placing a cell in world generation
   bool isPlotEnabled;  // enable GNU plotting
   game_e game;         // game type, such as random / glider etc.
-  runtype_e runType;   // running type for the application
 
   // game data
   GameOfLifePlotter *plotter = NULL;  // GNU plotting API
@@ -42,8 +37,21 @@ class GameOfLife : public Project {
   int populateCurrentWorld();
 
  public:
-  GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, bool isPlotEnabled, game_e game,
-             runtype_e runType);
+  GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, bool isPlotEnabled, game_e game);
+
+  /**
+   * Serial implementation of the Game of Life.
+   */
   void serial();
+
+  /**
+   * Parallel implementation of the Game of Life using OpenMP. The plotting and calculations are done in parallel as
+   * OpenMP tasks. Within the calculation task, multiple threads process the game in parallel.
+   */
   void parallel();
+
+  /**
+   * Print information about the game.
+   */
+  void printParameters(runtype_e runType);
 };

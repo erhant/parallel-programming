@@ -1,9 +1,3 @@
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "game-of-life.hpp"
 
 int main(int argc, char **argv) {
@@ -14,7 +8,6 @@ int main(int argc, char **argv) {
   float prob = 0.5;
   long seed = 0;
   game_e game = DEFAULT;
-  runtype_e runType = SERIAL;
   int numthreads = 1;
   bool isPlotEnabled = false;
 
@@ -34,8 +27,6 @@ int main(int argc, char **argv) {
       seed = atof(argv[++ac]);
     } else if (MATCH_ARG("--plot")) {
       isPlotEnabled = true;
-    } else if (MATCH_ARG("--parallel")) {
-      runType = PARALLEL;
     } else if (MATCH_ARG("--game")) {
       int gameChoice = atoi(argv[++ac]);
       switch (gameChoice) {
@@ -55,20 +46,21 @@ int main(int argc, char **argv) {
           "[-ny <points>] "
           "[--iters <iterations>] "
           "[--seed <seed>] "
-          "[--prob prob] "
-          "[--threads numthreads] "
+          "[--prob <prob>] "
+          "[--threads <numthreads>] "
           "[--game <game no>] "
-          "[--parallel] "
           "[--plot]\n",
           argv[0]);
-      return (-1);
+      return -1;
     }
   }
 
   // seed randomizer
   seed_rand(seed);
 
-  GameOfLife app(nx, ny, numthreads, maxiter, prob, isPlotEnabled, game, runType);
+  GameOfLife app(nx, ny, numthreads, maxiter, prob, isPlotEnabled, game);
+  double time = app.run((numthreads == 1) ? SERIAL : PARALLEL);
+  printf("Running time for the iterations: %f sec.\n", time);
 
   return 0;
 }
