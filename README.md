@@ -18,4 +18,4 @@ Also includes [header files](./common/) for:
 - GNU Plotting
 - Random Numbers
 
-Most of the files have the following sturcture: a `main` file that parses command line arguments and calls the actual application. The application is called via a driver function that handles all the plotting and reporting if necessary. Parameters are usually held in a params object.
+Most of the files have the following sturcture: a `main` file that parses command line arguments and calls the actual application. Each application is a class with two functions: `serial` and `parallel` to run the application in either mode respectively.

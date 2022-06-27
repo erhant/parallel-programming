@@ -32,7 +32,7 @@
 		 fprintf(stderr, "%d-cudaCheckError() failed: %s\n", verbose_num, cudaGetErrorString(GLOBAL_ERR)); \
 	 }
  
- #define MATCH(s) (!strcmp(argv[ac], (s)))
+ #define MATCH_ARG(s) (!strcmp(argv[ac], (s)))
  
  cudaError_t GLOBAL_ERR; // used by macro
  
@@ -155,13 +155,13 @@ int main(int argc, char *argv[]) {
 	return(-1);
 	}
 	for(int ac=1;ac<argc;ac++) {
-		if(MATCH("-i")) {
+		if(MATCH_ARG("-i")) {
 			filename = argv[++ac];
-		} else if(MATCH("-iter")) {
+		} else if(MATCH_ARG("-iter")) {
 			n_iter = atoi(argv[++ac]);
-		} else if(MATCH("-l")) {
+		} else if(MATCH_ARG("-l")) {
 			lambda = atof(argv[++ac]);
-		} else if(MATCH("-o")) {
+		} else if(MATCH_ARG("-o")) {
 			outputname = argv[++ac];
 		} else {
 		printf("Usage: %s [-i < filename>] [-iter <n_iter>] [-l <lambda>] [-o <outputfilename>]\n",argv[0]);

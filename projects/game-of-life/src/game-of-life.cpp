@@ -1,19 +1,38 @@
 #include "game-of-life.hpp"
 
-static GOF_Plotter *plotter = NULL;
-
-void game_of_life_serial(const int nx, const int ny, const int numthreads, const int maxiter, int population,
-                         char **currWorld, char **nextWorld) {
-  char **tmpWorld = NULL;
-  int i, j, iter;
-  int sum = 0;
-  short proceedToSwap;  // flag variable
-  double t0;
-
-  for (iter = 0; iter < maxiter && population != 0; iter++) {
-    population = 0;
+// auxillary function for world population
+int GameOfLife::populateCurrentWorld() {
+  population = 0;
+  if (game == DEFAULT) {
+    // randomly generated
     for (int i = 1; i < nx - 1; i++) {
       for (int j = 1; j < ny - 1; j++) {
+        if (real_rand() < prob) {
+          currWorld[i][j] = true;
+          population++;
+        } else {
+          currWorld[i][j] = false;
+        }
+      }
+    }
+
+  } else if (game == BLOCK) {
+    // still block-life
+    printf("2x2 Block, still life\n");
+    int nx2 = nx / 2;
+    int ny2 = ny / 2;
+    currWorld[nx2 + 1][ny2 + 1] = currWorld[nx2][ny2 + 1] = currWorld[nx2 + 1][ny2] = currWorld[nx2][ny2] = 1;
+    population = 4;
+  }
+  // @note can add more games here
+  return population;
+}
+
+void GameOfLife::serial() {
+  for (int iter = 0; iter < maxiter && population != 0; ++iter) {
+    population = 0;
+    for (int i = 1; i < nx - 1; ++i) {
+      for (int j = 1; j < ny - 1; ++j) {
         // calculate neighbor count
         int nn = currWorld[i + 1][j] + currWorld[i - 1][j] + currWorld[i][j + 1] + currWorld[i][j - 1] +
                  currWorld[i + 1][j + 1] + currWorld[i - 1][j - 1] + currWorld[i - 1][j + 1] + currWorld[i + 1][j - 1];
@@ -29,68 +48,40 @@ void game_of_life_serial(const int nx, const int ny, const int numthreads, const
     nextWorld = currWorld;
     currWorld = tmpWorld;
 
+    // plot
     if (plotter) plotter->plot(iter, population, currWorld);
   }
 }
 
-void game_of_life_parallel(const int nx, const int ny, const int numthreads, const int maxiter, int population,
-                           char **currWorld, char **nextWorld) {
-  char **tmpWorld = NULL;
+void GameOfLife::parallel() {
   int i, j, iter;
   int sum = 0;
-  short proceedToSwap;  // flag variable
-  double t0;
 
-  // do one iteration outside
-#pragma omp parallel num_threads(numthreads)
-  {
-#pragma omp for reduction(+: sum) private(j) // we could use collapse(2) but then it would be 2D decomposition, so we go for only one loop parallelization.
-    for (i = 1; i < nx - 1; i++) {
-      for (j = 1; j < ny - 1; j++) {
-        // Calculate neighbor count
-        int nn = currWorld[i + 1][j] + currWorld[i - 1][j] + currWorld[i][j + 1] + currWorld[i][j - 1] +
-                 currWorld[i + 1][j + 1] + currWorld[i - 1][j - 1] + currWorld[i - 1][j + 1] + currWorld[i + 1][j - 1];
-        // If alive: check if you die, if dead: check if you can produce.
-        nextWorld[i][j] = currWorld[i][j] ? (nn == 2 || nn == 3) : (nn == 3);
-        // Update population (CRITICAL)
-        sum += nextWorld[i][j];
-      }
-    }
-#pragma omp single nowait
-    population = sum;
-  }
-
-  /* Pointer Swap : nextWorld <-> currWorld */
-  tmpWorld = nextWorld;
-  nextWorld = currWorld;
-  currWorld = tmpWorld;
-
-  // now inside the loop we will print the world, while calculating the next one
-  // is it possible to perhaps combine these two parallel regions into one, while also including this iterative loop
-  // inside?
-  for (iter = 1; iter < maxiter && population; ++iter) {
-    /* Use currWorld to compute the updates and store it in nextWorld */
-    population = 0;  // do this outside and at the end (instead of start)
+  for (iter = 0; iter < maxiter && population; ++iter) {
+    population = 0;
     sum = 0;
-    proceedToSwap = 0;  // flag variable
 
+    // spawn 2 threads
 #pragma omp parallel num_threads(2) if (numthreads > 1)
     {
 #pragma omp single
       {
-// task 1: plotting
-#pragma omp task private(i, j)
-        {
-          if (plotter) plotter->plot(iter, population, currWorld);
-        }
-
-// task 2: computing
+        // task 1: plotting
 #pragma omp task
         {
-#pragma omp parallel num_threads(numthreads - 1) if (numthreads > 2)  // nested parallel enable
+          if (plotter) plotter->plot(iter, population, currWorld);
+        }  // end of plot task
+
+        // task 2: computing
+#pragma omp task
+        {
+          // spawn rest of the threads
+#pragma omp parallel num_threads(numthreads - 1) if (numthreads > 2)
           {
-#pragma omp for reduction(+: sum) private(j) // we could use collapse(2) but then it would be 2D decomposition, so we go for only one loop parallelization.
+            // a sum reduction in parallel
+#pragma omp for reduction(+ : sum) private(j)
             for (i = 1; i < nx - 1; i++) {
+              // we could use collapse(2) but then it would be 2D decomposition, we decided 1D only
               for (j = 1; j < ny - 1; j++) {
                 //  calculate neighbor count
                 int nn = currWorld[i + 1][j] + currWorld[i - 1][j] + currWorld[i][j + 1] + currWorld[i][j - 1] +
@@ -101,18 +92,14 @@ void game_of_life_parallel(const int nx, const int ny, const int numthreads, con
                 // update population (CRITICAL)
                 sum += nextWorld[i][j];
               }
-            }
+            }  // end of for reduction
 
 #pragma omp single nowait
-            {
-              // printf("Thread %d reporting in to swap.\n",omp_get_thread_num()); // debug purposes
-              population += sum;
-            }
-          }
-        }  // end of compute task
-
-      }  // end of single
-    }    // end of 2 threads
+            { population += sum; }  // end of single nowait
+          }                         // end of parallel N-1 threads
+        }                           // end of compute task
+      }                             // end of single
+    }                               // end of parallel 2 threads
 
     // pointer swap
     tmpWorld = nextWorld;
@@ -120,92 +107,76 @@ void game_of_life_parallel(const int nx, const int ny, const int numthreads, con
     currWorld = tmpWorld;
   }
 
-  // We have print one more, because this was calculated at the last iteration
+  // we have one more print, because this was calculated at the last iteration
   if (plotter) plotter->plot(iter, population, currWorld);
 }
 
-int populateWorld(params_t params, char **world) {
-  int population = 0;
-  if (params.game == DEFAULT) {
-    // randomly generated
-    for (int i = 1; i < params.nx - 1; i++) {
-      for (int j = 1; j < params.ny - 1; j++) {
-        if (real_rand() < params.prob) {
-          world[i][j] = 1;
-          population++;
-        } else {
-          world[i][j] = 0;
-        }
-      }
-    }
+GameOfLife::GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, bool isPlotEnabled, game_e game,
+                       runtype_e runType) {
+  // add ghost regions
+  nx += 2;
+  ny += 2;
 
-  } else if (params.game == BLOCK) {
-    // still block-life
-    printf("2x2 Block, still life\n");
-    int nx2 = params.nx / 2;
-    int ny2 = params.ny / 2;
-    world[nx2 + 1][ny2 + 1] = world[nx2][ny2 + 1] = world[nx2 + 1][ny2] = world[nx2][ny2] = 1;
-    population = 4;
-  }
-  return population;
-}
-
-void game_of_life_start(const params_t params) {
-  seed_rand(params.seedVal);
-  int i;
+  // update parameters
+  this->nx;
+  this->ny;
+  this->numthreads;
+  this->maxiter;
+  this->prob = prob;
+  this->isPlotEnabled = isPlotEnabled;
+  this->game = game;
+  this->runType = runType;
 
   // allocate current world (which you read from)
-  char **currWorld = (char **)malloc(sizeof(char *) * params.nx + sizeof(char) * params.nx * params.ny);
-  for (i = 0; i < params.nx; i++) currWorld[i] = (char *)(currWorld + params.nx) + i * params.ny;
+  int i;
+  currWorld = (bool **)malloc(sizeof(bool *) * nx + sizeof(bool) * nx * ny);
+  for (i = 0; i < nx; i++) currWorld[i] = (bool *)(currWorld + nx) + i * ny;
 
   // allocate next world (which you write to)
-  char **nextWorld = (char **)malloc(sizeof(char *) * params.nx + sizeof(char) * params.nx * params.ny);
-  for (i = 0; i < params.nx; i++) nextWorld[i] = (char *)(nextWorld + params.nx) + i * params.ny;
+  nextWorld = (bool **)malloc(sizeof(bool *) * nx + sizeof(bool) * nx * ny);
+  for (i = 0; i < nx; i++) nextWorld[i] = (bool *)(nextWorld + nx) + i * ny;
 
   // reset boundaries
-  for (i = 0; i < params.nx; i++) {
+  for (i = 0; i < nx; i++) {
     currWorld[i][0] = 0;
-    currWorld[i][params.ny - 1] = 0;
+    currWorld[i][ny - 1] = 0;
     nextWorld[i][0] = 0;
-    nextWorld[i][params.ny - 1] = 0;
+    nextWorld[i][ny - 1] = 0;
   }
-  for (i = 0; i < params.ny; i++) {
+  for (i = 0; i < ny; i++) {
     currWorld[0][i] = 0;
-    currWorld[params.nx - 1][i] = 0;
+    currWorld[nx - 1][i] = 0;
     nextWorld[0][i] = 0;
-    nextWorld[params.nx - 1][i] = 0;
+    nextWorld[nx - 1][i] = 0;
   }
 
   // plot the starting world
-  if (!params.disableDisplay) {
-    plotter = new GOF_Plotter(params.nx, params.ny);
-    plotter->plot(0, 0, currWorld);
-  }
+  this->populateCurrentWorld();
+  if (isPlotEnabled) plotter = new GameOfLifePlotter(nx, ny);
 
   // run
-  float ms = 0;
-  if (params.numthreads == 1) {
-    printf("Serial\n\tProbability: %f\n\tThreads: %d\n\tIterations: %d\n\tProblem Size: %d x %d\n", params.prob,
-           params.numthreads, params.maxiter, params.nx, params.ny);
+  if (numthreads == 1) {
+    printf("Serial\n\tProbability: %f\n\tThreads: %d\n\tIterations: %d\n\tProblem Size: %d x %d\n", prob, numthreads,
+           maxiter, nx, ny);
 
-    START_HOST_TIMERS();
-    game_of_life_serial();
-    STOP_HOST_TIMERS(ms);
+    // START_HOST_TIMERS();
+    this->serial();
+    // STOP_HOST_TIMERS(runtimeMS);
   } else {
-    printf("Parallel\n\tProbability: %f\n\tThreads: %d\n\tIterations: %d\n\tProblem Size: %d x %d\n", params.prob,
-           params.numthreads, params.maxiter, params.nx, params.ny);
+    printf("Parallel\n\tProbability: %f\n\tThreads: %d\n\tIterations: %d\n\tProblem Size: %d x %d\n", prob, numthreads,
+           maxiter, nx, ny);
 
-    START_HOST_TIMERS();
-    game_of_life_parallel();
-    STOP_HOST_TIMERS(ms);
+    // START_HOST_TIMERS();
+    this->parallel();
+    // STOP_HOST_TIMERS(runtimeMS);
   }
 
-  printf("Running time for the iterations: %f sec.\n", ms);
+  printf("Running time for the iterations: %f sec.\n", runtimeMS);
+}
 
+GameOfLife::~GameOfLife() {
   // frees
-  if (!params.disableDisplay) delete plotter;
+  if (isPlotEnabled) delete plotter;
   free(nextWorld);
   free(currWorld);
 }
-
-// TODO: make this whole thing into a class

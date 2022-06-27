@@ -2,9 +2,9 @@
 
 #include "gnu_plot.hpp"
 
-class GOF_Plotter : public GNU_Plotter {
+class GameOfLifePlotter : public GNUPlotter {
  public:
-  GOF_Plotter(int nx, int ny);
+  GameOfLifePlotter(int nx, int ny);
 
-  void plot(const int iter, int population, char **mesh);
+  void plot(const int iter, int population, bool **mesh);
 };

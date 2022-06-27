@@ -16,7 +16,7 @@ void solve_NQueens(int board[N][N], int col);
 int CUTOFF_DEPTH = N;  // if >= N there will be no CUTOFF
 int NUM_SOLUTIONS = 0;
 
-#define MATCH(s) (!strcmp(argv[ac], (s)))
+#define MATCH_ARG(s) (!strcmp(argv[ac], (s)))
 
 bool can_be_placed(int board[N][N], int row, int col) {
   int i, j;
@@ -87,9 +87,9 @@ int main(int argc, char **argv) {
   int numthreads = 1;
   int ac;
   for (ac = 1; ac < argc; ac++) {
-    if (MATCH("-c")) {
+    if (MATCH_ARG("-c")) {
       CUTOFF_DEPTH = atoi(argv[++ac]);
-    } else if (MATCH("-t")) {
+    } else if (MATCH_ARG("-t")) {
       numthreads = atoi(argv[++ac]);
     } else {
       printf("\nUsage: %s [-c <cutoff depth>]\n", argv[0]);

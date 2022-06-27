@@ -5,69 +5,70 @@
 #include <string.h>
 
 #include "game-of-life.hpp"
-#include "params.hpp"
 
 int main(int argc, char **argv) {
-  int i, j, ac;
+  // set defaults
+  int maxiter = 200;
+  int nx = 100;
+  int ny = 100;
+  float prob = 0.5;
+  long seed = 0;
+  game_e game = DEFAULT;
+  runtype_e runType = SERIAL;
+  int numthreads = 1;
+  bool isPlotEnabled = false;
 
-  // set default input parameters
-  params_t params;
-  params.maxiter = 200;
-  params.nx = 100;
-  params.ny = 100;
-  params.prob = 0.5;
-  params.seedVal = 0;
-  params.game = DEFAULT;
-  params.isSingleStep = false;
-  params.numthreads = 1;
-  params.disableDisplay = false;
-  params.disableLogging = false;
-
-  /* Over-ride with command-line input parameters (if any) */
-  // ./life -i MAXITER -t NUMTHREAD -p PROB -s SEEDVAL -step SINGLESTEP -g GAMENO -d
-  // -d takes no parameters but it will disable display, I set it to be -d by default.
-  for (ac = 1; ac < argc; ac++) {
+  // overrides
+  for (int ac = 1; ac < argc; ac++) {
     if (MATCH_ARG("-nx")) {
-      params.nx = atoi(argv[++ac]);
+      nx = atoi(argv[++ac]);
     } else if (MATCH_ARG("-ny")) {
-      params.ny = atoi(argv[++ac]);
-    } else if (MATCH_ARG("-i")) {
-      params.maxiter = atoi(argv[++ac]);
-    } else if (MATCH_ARG("-t")) {
-      params.numthreads = atof(argv[++ac]);
-    } else if (MATCH_ARG("-p")) {
-      params.prob = atof(argv[++ac]);
-    } else if (MATCH_ARG("-s")) {
-      params.seedVal = atof(argv[++ac]);
-    } else if (MATCH_ARG("-step")) {
-      params.isSingleStep = true;
-    } else if (MATCH_ARG("-d")) {
-      params.disableDisplay = true;
-    } else if (MATCH_ARG("-l")) {
-      params.disableLogging = true;
-    } else if (MATCH_ARG("-g")) {
+      ny = atoi(argv[++ac]);
+    } else if (MATCH_ARG("--iters")) {
+      maxiter = atoi(argv[++ac]);
+    } else if (MATCH_ARG("--threads")) {
+      numthreads = atof(argv[++ac]);
+    } else if (MATCH_ARG("--prob")) {
+      prob = atof(argv[++ac]);
+    } else if (MATCH_ARG("--seed")) {
+      seed = atof(argv[++ac]);
+    } else if (MATCH_ARG("--plot")) {
+      isPlotEnabled = true;
+    } else if (MATCH_ARG("--parallel")) {
+      runType = PARALLEL;
+    } else if (MATCH_ARG("--game")) {
       int gameChoice = atoi(argv[++ac]);
       switch (gameChoice) {
         case 0:
-          params.game = DEFAULT;
+          game = DEFAULT;
+          break;
+        case 1:
+          game = BLOCK;
+          break;
         default:
-          params.game = DEFAULT;
+          game = DEFAULT;
       }
     } else {
       printf(
-          "Usage: %s [-nx <points>] [-ny <points>] [-i <iterations>] [-s <seed>] [-p prob] [-t numthreads] [-step] [-g "
-          "<game #>] "
-          "[-d]\n",
+          "Usage: %s "
+          "[-nx <points>] "
+          "[-ny <points>] "
+          "[--iters <iterations>] "
+          "[--seed <seed>] "
+          "[--prob prob] "
+          "[--threads numthreads] "
+          "[--game <game no>] "
+          "[--parallel] "
+          "[--plot]\n",
           argv[0]);
       return (-1);
     }
   }
 
-  // Increment sizes to account for boundary ghost cells
-  params.nx = params.nx + 2;
-  params.ny = params.ny + 2;
+  // seed randomizer
+  seed_rand(seed);
 
-  game_of_life_start(params);
+  GameOfLife app(nx, ny, numthreads, maxiter, prob, isPlotEnabled, game, runType);
 
-  return (0);
+  return 0;
 }

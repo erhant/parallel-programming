@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-class GNU_Plotter {
+class GNUPlotter {
  private:
   FILE* gnu = NULL;
   int m;  // x-dimension size
@@ -11,13 +11,13 @@ class GNU_Plotter {
 
  public:
   // Constructor opens GNU pipe in 'w' mode
-  GNU_Plotter();
+  GNUPlotter();
 
   // Destructor closes GNU pipe
-  ~GNU_Plotter();
+  ~GNUPlotter();
 
   // Set the dimensions of plot, instead of providing it on each plot
   void setDimensions(int nx, int ny, int offset);
 
-  void plotMesh(const char* title, char** mesh;
+  void plotMesh(const char* title, bool** mesh);
 };

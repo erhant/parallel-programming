@@ -1,55 +1,5 @@
-/*
- * noise_remover.cpp
- *
- * This program removes noise from an image based on Speckle Reducing Anisotropic Diffusion
- * Y. Yu, S. Acton, Speckle reducing anisotropic diffusion,
- * IEEE Transactions on Image Processing 11(11)(2002) 1260-1270 <http://people.virginia.edu/~sc5nf/01097762.pdf>
- * Original implementation is Modified by Burak BASTEM
- */
+#include "kernels.cuh"
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-
-#define DIM_THREAD_BLOCK_X 32
-#define DIM_THREAD_BLOCK_Y 32
-
-#define CUDA_CHECK(call)                                                                    \
-  if ((call) != cudaSuccess) {                                                              \
-    cudaError_t err = cudaGetLastError();                                                   \
-    printf("CUDA error calling method \"" #call "\" - err: %s\n", cudaGetErrorString(err)); \
-  }
-
-#define CUDA_GET_LAST_ERR(verbose_num)                                                                \
-  GLOBAL_ERR = cudaGetLastError();                                                                    \
-  if (cudaSuccess != GLOBAL_ERR) {                                                                    \
-    fprintf(stderr, "%d-cudaCheckError() failed: %s\n", verbose_num, cudaGetErrorString(GLOBAL_ERR)); \
-  }
-
-#define MATCH(s) (!strcmp(argv[ac], (s)))
-
-cudaError_t GLOBAL_ERR;  // used by macro
-
-// returns the current time
-static const double kMicro = 1.0e-6;
-double get_time() {
-  struct timeval TV;
-  struct timezone TZ;
-  const int RC = gettimeofday(&TV, &TZ);
-  if (RC == -1) {
-    printf("ERROR: Bad call to gettimeofday\n");
-    return (-1);
-  }
-  return (((double)TV.tv_sec) + kMicro * ((double)TV.tv_usec));
-}
-
-// KERNELS
 // Reduction: Most naive version possible. Everything is in global memory.
 __global__ void reduction_kernel(unsigned char* image, int width, int height, int n_pixels, float* sum, float* sum2) {
   int j = blockIdx.x * blockDim.x + threadIdx.x;
@@ -69,6 +19,7 @@ __global__ void statistics_kernel(float* sum, int n_pixels, float* sum2, float* 
   float variance = (sum2[0] / n_pixels) - mean * mean;  // 1 global access
   std_dev[0] = variance / (mean * mean);                // 1 global access
 }
+
 // Compute 1:
 __global__ void compute1_kernel(unsigned char* image, int width, int height, int n_pixels, float* std_dev,
                                 float* north_deriv, float* south_deriv, float* west_deriv, float* east_deriv,
@@ -170,13 +121,13 @@ void driver_function() {
     return (-1);
   }
   for (int ac = 1; ac < argc; ac++) {
-    if (MATCH("-i")) {
+    if (MATCH_ARG("-i")) {
       filename = argv[++ac];
-    } else if (MATCH("-iter")) {
+    } else if (MATCH_ARG("-iter")) {
       n_iter = atoi(argv[++ac]);
-    } else if (MATCH("-l")) {
+    } else if (MATCH_ARG("-l")) {
       lambda = atof(argv[++ac]);
-    } else if (MATCH("-o")) {
+    } else if (MATCH_ARG("-o")) {
       outputname = argv[++ac];
     } else {
       printf("Usage: %s [-i < filename>] [-iter <n_iter>] [-l <lambda>] [-o <outputfilename>]\n", argv[0]);
@@ -279,14 +230,14 @@ void driver_function() {
 
   // (HOST) Final: Print
   printf("Time spent in different stages of the application:\n");
-  printf("%9.6f s => Part I: allocate and initialize variables\n", (time_1 - time_0));
-  printf("%9.6f s => Part II: parse command line arguments\n", (time_2 - time_1));
-  printf("%9.6f s => Part III: read image\n", (time_3 - time_2));
-  printf("%9.6f s => Part IV: allocate variables\n", (time_4 - time_3));
-  printf("%9.6f s => Part V: compute\n", (time_5 - time_4));
-  printf("%9.6f s => Part VI: write image to file\n", (time_6 - time_5));
-  printf("%9.6f s => Part VII: get average of sum of pixels for testing and calculate GFLOPS\n", (time_7 - time_6));
-  printf("%9.6f s => Part VIII: deallocate variables\n", (time_7 - time_6));
+  printf("%9.6f s => Part 1: allocate and initialize variables\n", (time_1 - time_0));
+  printf("%9.6f s => Part 2: parse command line arguments\n", (time_2 - time_1));
+  printf("%9.6f s => Part 3: read image\n", (time_3 - time_2));
+  printf("%9.6f s => Part 4: allocate variables\n", (time_4 - time_3));
+  printf("%9.6f s => Part 5: compute\n", (time_5 - time_4));
+  printf("%9.6f s => Part 6: write image to file\n", (time_6 - time_5));
+  printf("%9.6f s => Part 7: get average of sum of pixels for testing and calculate GFLOPS\n", (time_7 - time_6));
+  printf("%9.6f s => Part 8: deallocate variables\n", (time_7 - time_6));
   printf("Total time: %9.6f s\n", (time_8 - time_0));
   printf("Average of sum of pixels: %9.6f\n", test);
   printf("GFLOPS: %f\n", gflops);
