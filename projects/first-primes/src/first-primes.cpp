@@ -42,7 +42,11 @@ void FirstPrimes::parallel() {
 }
 
 void FirstPrimes::printParameters(runtype_e runType) {
-  printf("Finding first %d primes %s.\n", numPrimes, runType == SERIAL ? "serially" : "in parallel");
+  if (runType == SERIAL) {
+    printf("Finding first %d primes serially.\n", numPrimes);
+  } else {
+    printf("Finding first %d primes in parallel, %d threads max.\n", numPrimes, omp_get_max_threads());
+  }
 }
 
 FirstPrimes::FirstPrimes(int numPrimes) {

@@ -23,5 +23,5 @@ int main(int argc, char **argv) {
 
   FirstPrimes fp(n);
   double time = fp.run(runType);
-  printf("Finished in %f ms.", n, time);
+  printf("Finished in %f ms.\n", time);
 }

@@ -4,10 +4,12 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/common/include",
+                "${workspaceFolder}/common/templates",
                 "${workspaceFolder}/projects/game-of-life/include",
                 "${workspaceFolder}/projects/noise-remover/include",
                 "${workspaceFolder}/projects/first-primes/include",
-                "/usr/local/include/"
+                "/usr/local/include/",
+                "/opt/homebrew/include"
             ],
             "defines": [],
             "macFrameworkPath": [

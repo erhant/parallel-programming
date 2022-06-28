@@ -116,10 +116,10 @@ GameOfLife::GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, 
   ny += 2;
 
   // update parameters
-  this->nx;
-  this->ny;
-  this->numthreads;
-  this->maxiter;
+  this->nx = nx;
+  this->ny = ny;
+  this->numthreads = numthreads;
+  this->maxiter = maxiter;
   this->prob = prob;
   this->isPlotEnabled = isPlotEnabled;
   this->game = game;

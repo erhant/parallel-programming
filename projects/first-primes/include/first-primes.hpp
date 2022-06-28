@@ -11,6 +11,7 @@ class FirstPrimes : public Project {
 
  public:
   FirstPrimes(int numPrimes);
+  ~FirstPrimes();
 
   /**
    * Serial implementation of the sieve-based prime finding method.

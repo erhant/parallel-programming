@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv) {
   // set defaults
-  int maxiter = 200;
+  int maxiter = 100;
   int nx = 100;
   int ny = 100;
   float prob = 0.5;

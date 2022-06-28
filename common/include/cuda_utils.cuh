@@ -1,10 +1,9 @@
 #pragma once
 
-#include <assert.h>
 #ifdef __NVCC__
 #include <cuda.h>
 #endif
-
+#include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>

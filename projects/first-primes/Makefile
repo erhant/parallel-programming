@@ -1,6 +1,6 @@
 # Binary target
 TGTDIR  := bin
-TARGET  ?= gameoflife
+TARGET  ?= primes
 TESTTGT  = test
 
 # Compiler and linker

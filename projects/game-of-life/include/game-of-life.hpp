@@ -2,10 +2,7 @@
 
 #include "general_utils.hpp"
 #include "plotter.hpp"
-
-extern "C" {
-#include "real_rand.h"
-}
+#include "real_rand.hpp"
 
 typedef enum GameType { DEFAULT, BLOCK } game_e;
 
@@ -38,6 +35,7 @@ class GameOfLife : public Project {
 
  public:
   GameOfLife(int nx, int ny, int numthreads, int maxiter, float prob, bool isPlotEnabled, game_e game);
+  ~GameOfLife();
 
   /**
    * Serial implementation of the Game of Life.

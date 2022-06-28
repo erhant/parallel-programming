@@ -4,9 +4,9 @@
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": "active",
   "files.associations": {
-    "assert.h": "c",
     "*.tpp": "cpp",
-    "iterator": "cpp"
+    "*.cuh": "cpp",
+    "*.cu": "cuda"
   },
   
 }
