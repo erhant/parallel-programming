@@ -4,11 +4,10 @@ Various parallel programming implementations.
 
 - [Sparse Matrix-Vector Multiplication](./projects/spmv/)
 - [Cardiac Simulation](./projects/cardiac-simulation)
-- [Jacobi Stencil](./projects/jacobi-1d-stencil/)
-- [Jacobi Method](./projects/jacobi-method/)
+- [Jacobi Stencil](./projects/jacobi-stencil/)
 - [Game of Life](./projects/game-of-life/)
 - [Noise Remover](./projects/noise-remover/)
-- [$N$-Queens Problem](./projects/nqueens-problem/)
+- [N-Queens Problem](./projects/nqueens-problem/)
 - [Primes](./projects/primes)
 
 Also includes [header files](./common/) for:
